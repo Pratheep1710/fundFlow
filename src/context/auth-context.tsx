@@ -21,9 +21,15 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, userData?: UserData) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+}
+
+interface UserData {
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -52,8 +58,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const signUp = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+  const signUp = async (email: string, password: string, userData?: UserData) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // If we have userData and a user was created successfully, store the additional user data
+    if (userData && userCredential.user) {
+      // Here you would typically store this data in Firestore or another database
+      // For now, we're just logging it - implement actual storage based on your backend
+      console.log('Additional user data to store:', {
+        uid: userCredential.user.uid,
+        email: email,
+        ...userData
+      });
+      
+      // You would add code here to store in your database
+      // Example:
+      // const db = getFirestore();
+      // await setDoc(doc(db, "users", userCredential.user.uid), {
+      //   firstName: userData.firstName,
+      //   lastName: userData.lastName,
+      //   phoneNumber: userData.phoneNumber,
+      //   email: email,
+      // });
+    }
   };
 
   const signOut = async () => {
